@@ -1,0 +1,37 @@
+{
+  "name": "devio/taxonomies",
+  "description": "",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Israel Ortuño",
+      "email": "ai.ortuno@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.4|^8.0",
+    "laravel/framework": "^8.0",
+    "spatie/eloquent-sortable": "^3.5",
+    "spatie/laravel-translatable": "^4.1"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^6.0",
+    "phpunit/phpunit": "^9.3",
+    "spatie/laravel-ray": "^1.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Devio\\Taxonomies\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Devio\\Taxonomies\\Tests\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
