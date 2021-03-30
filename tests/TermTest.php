@@ -77,4 +77,24 @@ class TermTest extends TestCase
         $this->assertCount(3, $terms);
         $this->assertEquals('foo', $terms[0]->name);
     }
+
+    /** @test */
+    public function it_finds_a_term_by_string()
+    {
+        Term::store('foo');
+
+        $this->assertEquals('foo', Term::fromString('foo')->name);
+    }
+
+    /** @test */
+    public function it_finds_a_term_by_string_and_taxonomy()
+    {
+        Term::store('foo', 'category');
+        Term::store('foo', 'product');
+
+        $foundTerm = Term::fromString('foo', 'product');
+
+        $this->assertEquals('foo', $foundTerm->name);
+        $this->assertEquals('product', $foundTerm->taxonomy->name);
+    }
 }

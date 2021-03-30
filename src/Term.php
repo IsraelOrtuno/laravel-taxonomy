@@ -2,8 +2,8 @@
 
 namespace Devio\Taxonomies;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 
 class Term extends Model
 {
@@ -18,9 +18,7 @@ class Term extends Model
      */
     public static function store($terms, $taxonomy = null)
     {
-        if (!$taxonomy) {
-            $taxonomy = config('taxonomy.default_taxonomy_name');
-        }
+        $taxonomy = static::resolveTaxonomyName($taxonomy);
 
         $taxonomy = app(Taxonomy::class)->store($taxonomy);
 
@@ -29,6 +27,22 @@ class Term extends Model
         }
 
         return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy));
+    }
+
+    public static function search($terms, $taxonomy = null)
+    {
+        return collect($terms)->map(function ($value) {
+
+        });
+    }
+
+    public static function fromString($term, $taxonomy = null)
+    {
+        $taxonomy = static::resolveTaxonomyName($taxonomy);
+
+        return static::where('name', $term)
+            ->whereHas('taxonomy', fn(Builder $query) => $query->where('name', $taxonomy))
+            ->first();
     }
 
     protected static function findOrCreate($term, $taxonomy)
@@ -47,6 +61,11 @@ class Term extends Model
     public function taxonomy()
     {
         return $this->belongsTo(Taxonomy::class);
+    }
+
+    protected static function resolveTaxonomyName($taxonomy = null)
+    {
+        return $taxonomy ?? config('taxonomy.default_taxonomy_name');
     }
 
     /**

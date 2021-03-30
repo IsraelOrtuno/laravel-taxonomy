@@ -2,13 +2,20 @@
 
 namespace Devio\Taxonomies;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 trait HasTaxonomies
 {
+    /**
+     * The terms queue will be storing those terms pending to be saved.
+     *
+     * @var array
+     */
     protected $termsQueue = [];
 
+    /**
+     * Boot the trait.
+     */
     public static function bootHasTaxonomies()
     {
         static::saved(function (self $taxableModel) {
@@ -16,22 +23,25 @@ trait HasTaxonomies
                 return;
             }
 
-            foreach ($queue as $term) {
-                $term = app(Term::class)->store($term);
-            }
+            $taxableModel->attachTerms($queue);
 
             $taxableModel->flushTermsQueue();
         });
     }
 
+    /**
+     * Relationship to terms table.
+     *
+     * @return MorphToMany
+     */
     public function terms(): MorphToMany
     {
         return $this->morphToMany($this->getTermsClass(), 'taxable');
     }
 
-    public function attachTerm($term, $taxonomy = null)
+    public function attachTerms($terms, $taxonomy = null): self
     {
-        $terms = Term::store(collect($term), $taxonomy);
+        $terms = Term::store(collect($terms), $taxonomy);
 
         $this->terms()->syncWithoutDetaching(
             $terms->pluckModelKeys()
@@ -40,7 +50,23 @@ trait HasTaxonomies
         return $this;
     }
 
-    public function syncTerms($terms, $taxonomy = null)
+    public function detachTerms($terms, $taxonomy = null): self
+    {
+        $terms = $this->resolveTerms($terms, $taxonomy);
+
+        $this->terms()->detach($terms->pluckModelKeys());
+
+        return $this;
+    }
+
+    /**
+     * Sync the given terms.
+     *
+     * @param $terms
+     * @param null $taxonomy
+     * @return $this
+     */
+    public function syncTerms($terms, $taxonomy = null): self
     {
         $terms = Term::store(collect($terms), $taxonomy);
 
@@ -49,12 +75,19 @@ trait HasTaxonomies
         return $this;
     }
 
-    public function syncTermsOfTaxonomy($terms, $taxonomy = null)
+    /**
+     * Sync terms of a specific taxonomy.
+     *
+     * @param $terms
+     * @param null $taxonomy
+     * @return $this
+     */
+    public function syncTermsOfTaxonomy($terms, $taxonomy = null): self
     {
         $terms = Term::store($terms, $taxonomy = Taxonomy::store($taxonomy));
 
-        $termsToDetach = $this->terms()->where(
         // taxonomy_id == $taxonomy->id
+        $termsToDetach = $this->terms()->where(
             app(Term::class)->getTaxonomyForeignKey(), $taxonomy->getKey()
         )->get();
 
@@ -74,29 +107,47 @@ trait HasTaxonomies
         $this->termsQueue = collect($terms);
     }
 
-    public function scopeWhereTerm(Builder $query, $term = null)
-    {
-    }
-
-    public function scopeWhereAnyTerm()
-    {
-    }
-
     /**
+     * Get the terms queue.
+     *
      * @return array
      */
-    public function getTermsQueue(): array
+    public function getTermsQueue()
     {
         return $this->termsQueue ?? [];
     }
 
+    /**
+     * Flush the terms queue.
+     */
     public function flushTermsQueue(): void
     {
         $this->termsQueue = [];
     }
 
+    /**
+     * Get the terms class name.
+     *
+     * @return false|string
+     */
     public function getTermsClass()
     {
         return get_class(app(Term::class));
+    }
+
+    /**
+     * Get an array of terms (or single) and return only existing instances.
+     *
+     * @param $terms
+     * @param null $taxonomy
+     * @return \Illuminate\Support\Collection
+     */
+    protected function resolveTerms($terms, $taxonomy = null)
+    {
+        return collect($terms)->map(function ($term) use ($taxonomy) {
+            if ($term instanceof Term) return $term;
+
+            return $this->getTermsClass()::fromString($term, $taxonomy);
+        })->filter();
     }
 }

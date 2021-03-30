@@ -12,6 +12,8 @@ class Post extends Model
 
     public $table = 'devio_taxonomies_posts';
 
+    protected $fillable = ['name', 'terms'];
+
     protected static function newFactory()
     {
         return PostFactory::new();

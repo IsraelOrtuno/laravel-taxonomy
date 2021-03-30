@@ -26,6 +26,16 @@ class Taxonomy extends Model
     }
 
     /**
+     * Find a taxonomy by name.
+     *
+     * @param $name
+     * @return mixed
+     */
+    public static function fromString($name) {
+        return static::where('name', $name)->first();
+    }
+
+    /**
      * Relationship to terms table.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

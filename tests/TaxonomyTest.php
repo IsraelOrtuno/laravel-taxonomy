@@ -21,4 +21,12 @@ class TaxonomyTest extends TestCase
 
         $this->assertEquals(1, $taxonomy->id);
     }
+
+    /** @test */
+    public function it_finds_a_taxonomy_by_string()
+    {
+        Taxonomy::store('category');
+
+        $this->assertEquals('category', Taxonomy::fromString('category')->name);
+    }
 }
