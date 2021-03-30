@@ -2,6 +2,7 @@
 
 namespace Devio\Taxonomies;
 
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 trait HasTaxonomies
@@ -39,6 +40,13 @@ trait HasTaxonomies
         return $this->morphToMany($this->getTermsClass(), 'taxable');
     }
 
+    /**
+     * Attach the given terms.
+     *
+     * @param $terms
+     * @param null $taxonomy
+     * @return $this
+     */
     public function attachTerms($terms, $taxonomy = null): self
     {
         $terms = Term::store(collect($terms), $taxonomy);
@@ -50,6 +58,13 @@ trait HasTaxonomies
         return $this;
     }
 
+    /**
+     * Dettach the given terms.
+     *
+     * @param $terms
+     * @param null $taxonomy
+     * @return $this
+     */
     public function detachTerms($terms, $taxonomy = null): self
     {
         $terms = $this->resolveTerms($terms, $taxonomy);
@@ -102,6 +117,11 @@ trait HasTaxonomies
         return $this;
     }
 
+    /**
+     * Add to terms queue any terms added via the ->terms mutator.
+     *
+     * @param $terms
+     */
     public function setTermsAttribute($terms)
     {
         $this->termsQueue = collect($terms);
@@ -142,7 +162,7 @@ trait HasTaxonomies
      * @param null $taxonomy
      * @return \Illuminate\Support\Collection
      */
-    protected function resolveTerms($terms, $taxonomy = null)
+    protected function resolveTerms($terms, $taxonomy = null) : Collection
     {
         return collect($terms)->map(function ($term) use ($taxonomy) {
             if ($term instanceof Term) return $term;
