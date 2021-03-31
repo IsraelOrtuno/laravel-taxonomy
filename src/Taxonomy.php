@@ -16,7 +16,7 @@ class Taxonomy extends Model
      */
     public static function store($name): static
     {
-        if ($name instanceof self) {
+        if ($name instanceof static) {
             return $name;
         } elseif (is_numeric($name)) {
             return (new static)->findOrFail($name);
