@@ -4,6 +4,7 @@ namespace Devio\Taxonomies;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Taxonomy extends Model
 {
@@ -12,9 +13,9 @@ class Taxonomy extends Model
     /**
      * Create a new taxonomy record.
      * @param $name
-     * @return static
+     * @return self
      */
-    public static function store($name): static
+    public static function store($name): self
     {
         if ($name instanceof static) {
             return $name;
@@ -25,12 +26,21 @@ class Taxonomy extends Model
         return static::firstOrCreate(compact('name'));
     }
 
+    public static function resolve(self|string|array|Collection $taxonomies): Collection
+    {
+        return collect($taxonomies)->map(function ($taxonomy) {
+            if ($taxonomy instanceof static) return $taxonomy;
+
+            return $this->getTermsClass()::getFromString($term, $taxonomy);
+        })->filter();
+    }
+
     /**
      * Find a taxonomy by name.
      * @param string $name
-     * @return static
+     * @return self
      */
-    public static function fromString(string $name): static
+    public static function findFromString(string $name): self
     {
         return static::where('name', $name)->first();
     }

@@ -30,26 +30,30 @@ class Term extends Model
         return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy));
     }
 
-    public static function search($terms, $taxonomy = null)
+    /**
+     * Get all terms from a string and taxonomy.
+     * @param string|array $terms
+     * @param string|null $taxonomy
+     * @return Collection
+     */
+    public static function getFromString(string|array $terms, string $taxonomy = null): Collection
     {
-        return collect($terms)->map(function ($value) {
+        $taxonomy = static::resolveTaxonomyName($taxonomy);
 
-        });
+        return static::whereIn('name', collect($terms))
+            ->whereHas('taxonomy', fn(Builder $query) => $query->where('name', $taxonomy))
+            ->get();
     }
 
     /**
      * Get a term from a string and taxonomy.
-     * @param string $term
+     * @param string|array $terms
      * @param string|null $taxonomy
      * @return Term
      */
-    public static function fromString(string $term, string $taxonomy = null): Term
+    public static function findFromString(string|array $terms, string $taxonomy = null): Term
     {
-        $taxonomy = static::resolveTaxonomyName($taxonomy);
-
-        return static::where('name', $term)
-            ->whereHas('taxonomy', fn(Builder $query) => $query->where('name', $taxonomy))
-            ->first();
+        return static::getFromString($terms, $taxonomy)->first();
     }
 
     /**

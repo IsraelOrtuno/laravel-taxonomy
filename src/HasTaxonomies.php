@@ -2,6 +2,7 @@
 
 namespace Devio\Taxonomies;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
@@ -117,6 +118,12 @@ trait HasTaxonomies
         return $this;
     }
 
+
+    public function hasTerms($terms, $taxonomy = null)
+    {
+//        return static::whereHas('terms', fn(Builder $query) => $query->where('name', $terms))
+    }
+
     /**
      * Add to terms queue any terms added via the ->terms mutator.
      *
@@ -167,7 +174,7 @@ trait HasTaxonomies
         return collect($terms)->map(function ($term) use ($taxonomy) {
             if ($term instanceof Term) return $term;
 
-            return $this->getTermsClass()::fromString($term, $taxonomy);
+            return $this->getTermsClass()::findFromString($term, $taxonomy);
         })->filter();
     }
 }

@@ -27,6 +27,6 @@ class TaxonomyTest extends TestCase
     {
         Taxonomy::store('category');
 
-        $this->assertEquals('category', Taxonomy::fromString('category')->name);
+        $this->assertEquals('category', Taxonomy::findFromString('category')->name);
     }
 }
