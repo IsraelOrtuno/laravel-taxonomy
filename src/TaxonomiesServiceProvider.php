@@ -7,7 +7,7 @@ use Illuminate\Support\ServiceProvider;
 
 class TaxonomiesServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/taxonomy.php', 'taxonomy');
         $this->loadMigrationsFrom(__DIR__ . '/../databsae/migrations');

@@ -3,6 +3,7 @@
 namespace Devio\Taxonomies;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Taxonomy extends Model
 {
@@ -10,11 +11,10 @@ class Taxonomy extends Model
 
     /**
      * Create a new taxonomy record.
-     *
      * @param $name
      * @return static
      */
-    public static function store($name)
+    public static function store($name): static
     {
         if ($name instanceof self) {
             return $name;
@@ -27,20 +27,19 @@ class Taxonomy extends Model
 
     /**
      * Find a taxonomy by name.
-     *
-     * @param $name
-     * @return mixed
+     * @param string $name
+     * @return static
      */
-    public static function fromString($name) {
+    public static function fromString(string $name): static
+    {
         return static::where('name', $name)->first();
     }
 
     /**
      * Relationship to terms table.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function terms()
+    public function terms(): HasMany
     {
         return $this->hasMany(Term::class);
     }

@@ -2,8 +2,10 @@
 
 namespace Devio\Taxonomies;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Term extends Model
 {
@@ -11,16 +13,15 @@ class Term extends Model
 
     /**
      * Create a new term bound to a taxonomy.
-     *
-     * @param $term
-     * @param string $taxonomy
-     * @return \Illuminate\Support\Collection|static
+     * @param Collection|array|string $terms
+     * @param Taxonomy|string|null $taxonomy
+     * @return Collection|Term
      */
-    public static function store($terms, $taxonomy = null)
+    public static function store(Collection|array|string $terms, Taxonomy|string $taxonomy = null): Collection|Term
     {
-        $taxonomy = static::resolveTaxonomyName($taxonomy);
-
-        $taxonomy = app(Taxonomy::class)->store($taxonomy);
+        $taxonomy = app(Taxonomy::class)->store(
+            static::resolveTaxonomyName($taxonomy)
+        );
 
         if (!is_array($terms) && !$terms instanceof \ArrayAccess) {
             return static::findOrCreate($terms, $taxonomy);
@@ -36,7 +37,13 @@ class Term extends Model
         });
     }
 
-    public static function fromString($term, $taxonomy = null)
+    /**
+     * Get a term from a string and taxonomy.
+     * @param string $term
+     * @param string|null $taxonomy
+     * @return Term
+     */
+    public static function fromString(string $term, string $taxonomy = null): Term
     {
         $taxonomy = static::resolveTaxonomyName($taxonomy);
 
@@ -45,7 +52,13 @@ class Term extends Model
             ->first();
     }
 
-    protected static function findOrCreate($term, $taxonomy)
+    /**
+     * Get the first matching term from database.
+     * @param $term
+     * @param $taxonomy
+     * @return Term
+     */
+    protected static function findOrCreate(Term|string $term, Taxonomy $taxonomy): Term
     {
         return $term instanceof Term ? $term : static::firstOrCreate([
             'name' => $term,
@@ -55,23 +68,28 @@ class Term extends Model
 
     /**
      * Relationship to taxonomies table.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function taxonomy()
+    public function taxonomy(): BelongsTo
     {
         return $this->belongsTo(Taxonomy::class);
     }
 
-    protected static function resolveTaxonomyName($taxonomy = null)
+    /**
+     * Get the given taxonomy name or default from config.
+     * @param null $taxonomy
+     * @return string
+     */
+    protected static function resolveTaxonomyName(Taxonomy|string $taxonomy = null): string
     {
-        return $taxonomy ?? config('taxonomy.default_taxonomy_name');
+        return $taxonomy instanceof Taxonomy ? $taxonomy->name : $taxonomy ?? config('taxonomy.default_taxonomy_name');
     }
 
     /**
      * Get the foreign key for the taxonomy relationship.
+     * @return string
      */
-    public function getTaxonomyForeignKey()
+    public function getTaxonomyForeignKey(): string
     {
         return (new static)->taxonomy()->getForeignKeyName();
     }

@@ -12,12 +12,12 @@ trait HasTaxonomies
      *
      * @var array
      */
-    protected $termsQueue = [];
+    protected Collection|array $termsQueue = [];
 
     /**
      * Boot the trait.
      */
-    public static function bootHasTaxonomies()
+    public static function bootHasTaxonomies(): void
     {
         static::saved(function (self $taxableModel) {
             if (!count($queue = $taxableModel->getTermsQueue())) {
@@ -122,7 +122,7 @@ trait HasTaxonomies
      *
      * @param $terms
      */
-    public function setTermsAttribute($terms)
+    public function setTermsAttribute($terms): void
     {
         $this->termsQueue = collect($terms);
     }
@@ -130,9 +130,9 @@ trait HasTaxonomies
     /**
      * Get the terms queue.
      *
-     * @return array
+     * @return Collection|array
      */
-    public function getTermsQueue()
+    public function getTermsQueue(): Collection|array
     {
         return $this->termsQueue ?? [];
     }
@@ -148,9 +148,9 @@ trait HasTaxonomies
     /**
      * Get the terms class name.
      *
-     * @return false|string
+     * @return string
      */
-    public function getTermsClass()
+    public function getTermsClass(): string
     {
         return get_class(app(Term::class));
     }
@@ -160,9 +160,9 @@ trait HasTaxonomies
      *
      * @param $terms
      * @param null $taxonomy
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
-    protected function resolveTerms($terms, $taxonomy = null) : Collection
+    protected function resolveTerms($terms, $taxonomy = null): Collection
     {
         return collect($terms)->map(function ($term) use ($taxonomy) {
             if ($term instanceof Term) return $term;
