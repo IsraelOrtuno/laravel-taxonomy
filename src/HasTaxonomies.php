@@ -20,14 +20,18 @@ trait HasTaxonomies
      */
     public static function bootHasTaxonomies(): void
     {
-        static::saved(function (self $taxableModel) {
-            if (!count($queue = $taxableModel->getTermsQueue())) {
+        static::saved(function (self $model) {
+            if (!count($queue = $model->getTermsQueue())) {
                 return;
             }
 
-            $taxableModel->attachTerms($queue);
+            $model->attachTerms($queue);
 
-            $taxableModel->flushTermsQueue();
+            $model->flushTermsQueue();
+        });
+
+        static::deleted(function(self $model) {
+            $model->detachAllTerms();
         });
     }
 
@@ -76,6 +80,32 @@ trait HasTaxonomies
     }
 
     /**
+     * Detach all terms.
+     * @param null $taxonomy
+     * @return $this
+     */
+    public function detachAllTerms()
+    {
+        $this->terms()->sync([]);
+
+        return $this;
+    }
+
+    /**
+     * Detach all terms for a given taxonomy (or default).
+     * @param null $taxonomy
+     * @return $this
+     */
+    public function detachAllTermsForTaxonomy($taxonomy = null)
+    {
+        $taxonomy = app(Taxonomy::class)->resolve($taxonomy);
+
+        $this->terms()->detach($taxonomy->terms->pluckModelKeys());
+
+        return $this;
+    }
+
+    /**
      * Sync the given terms.
      *
      * @param $terms
@@ -100,7 +130,7 @@ trait HasTaxonomies
      */
     public function syncTermsOfTaxonomy($terms, $taxonomy = null): self
     {
-        $terms = Term::store($terms, $taxonomy = Taxonomy::store($taxonomy));
+        $terms = app(Term::class)->store($terms, $taxonomy = Taxonomy::store($taxonomy));
 
         // taxonomy_id == $taxonomy->id
         $termsToDetach = $this->terms()->where(
@@ -184,17 +214,5 @@ trait HasTaxonomies
     public function getTermsClass(): string
     {
         return get_class(app(Term::class));
-    }
-
-    /**
-     * Get an array of terms (or single) and return only existing instances.
-     *
-     * @param $terms
-     * @param null $taxonomy
-     * @return Collection
-     */
-    protected function resolveTerms($terms, $taxonomy = null): Collection
-    {
-        return app(Term::class)->getFromString($terms, $taxonomy)->filter();
     }
 }

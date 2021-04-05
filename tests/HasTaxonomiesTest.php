@@ -2,7 +2,6 @@
 
 namespace Devio\Taxonomies\Tests;
 
-use Devio\Taxonomies\Taxonomy;
 use Devio\Taxonomies\Term;
 use Devio\Taxonomies\Tests\Support\Post;
 
@@ -83,6 +82,42 @@ class HasTaxonomiesTest extends TestCase
     }
 
     /** @test */
+    public function it_detaches_all_terms_in_once()
+    {
+        $post = Post::factory()->create()
+            ->attachTerms(['foo', 'bar']);
+
+        $post->detachAllTerms();
+
+        $this->assertCount(0, $post->terms);
+    }
+
+    /** @test */
+    public function it_detaches_all_terms_for_a_given_taxonomy()
+    {
+        $post = Post::factory()->create()
+            ->attachTerms(['foo', 'bar'])
+            ->attachTerms(['baz', 'qux'], 'category');
+
+        $post->detachAllTermsForTaxonomy('category');
+
+        $this->assertCount(2, $post->terms);
+        $this->assertEquals('foo', $post->terms[0]->name);
+    }
+
+    /** @test */
+    public function it_detaches_terms_on_entity_deletion()
+    {
+        $post = Post::factory()->create()
+            ->attachTerms(['foo', 'bar'])
+            ->attachTerms(['foo', 'bar'], 'category');
+
+        $post->delete();
+
+        $this->assertCount(0, $post->terms);
+    }
+
+    /** @test */
     public function it_syncs_a_given_bunch_of_terms()
     {
         $post = Post::factory()->create();
@@ -130,7 +165,7 @@ class HasTaxonomiesTest extends TestCase
     }
 
     /** @test */
-    public function it_queues_terms_when_setting_terms_attribute()
+    public function it_queues_terms_when_using_terms_mutator()
     {
         $post = Post::factory()->create();
 
@@ -140,7 +175,7 @@ class HasTaxonomiesTest extends TestCase
     }
 
     /** @test */
-    public function it_saves_terms_when_setting_as_terms_attribute()
+    public function it_attaches_a_term_when_using_terms_mutator()
     {
         $post = Post::factory()->create();
         $post->terms = [Term::store('foo'), Term::store('bar')];

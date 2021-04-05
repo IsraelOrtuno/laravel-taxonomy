@@ -4,6 +4,8 @@ namespace Devio\Taxonomies\Tests;
 
 use Devio\Taxonomies\Taxonomy;
 use Devio\Taxonomies\Term;
+use Devio\Taxonomies\Tests\Support\CustomTaxonomy;
+use Devio\Taxonomies\Tests\Support\Post;
 
 class TermTest extends TestCase
 {
@@ -103,5 +105,16 @@ class TermTest extends TestCase
 
         $this->assertEquals('foo', $foundTerm->name);
         $this->assertEquals('product', $foundTerm->taxonomy->name);
+    }
+
+    /** @test */
+    public function it_can_override_taxonomy_class()
+    {
+        app()->bind(Taxonomy::class, CustomTaxonomy::class);
+
+        $taxonomy = CustomTaxonomy::store('category');
+        $term = Term::store('foo', $taxonomy);
+
+        $this->assertInstanceOf(CustomTaxonomy::class, $term->taxonomy);
     }
 }
