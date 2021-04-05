@@ -2,6 +2,7 @@
 
 namespace Devio\Taxonomies\Tests;
 
+use Devio\Taxonomies\Taxonomy;
 use Devio\Taxonomies\Term;
 use Devio\Taxonomies\Tests\Support\Post;
 
@@ -171,5 +172,66 @@ class HasTaxonomiesTest extends TestCase
         $post->save();
 
         $this->assertCount(0, $post->getTermsQueue());
+    }
+
+    /** @test */
+    public function it_filters_entities_with_any_of_given_terms()
+    {
+        Post::factory()->create(['terms' => ['foo', 'bar']]);
+        Post::factory()->create(['terms' => ['foo', 'baz']]);
+
+        $this->assertCount(1, Post::withTerms('bar')->get());
+        $this->assertCount(2, Post::withTerms(['bar', 'baz'])->get());
+        $this->assertCount(2, Post::withTerms('foo')->get());
+    }
+
+    /** @test */
+    public function it_filters_entities_with_any_of_given_terms_and_taxonomy()
+    {
+        Post::factory()->create()
+            ->attachTerms(['foo', 'bar'], 'category')
+            ->attachTerms(['foo'], 'product');
+        Post::factory()->create()
+            ->attachTerms(['foo', 'baz', 'qux'], 'product');
+
+        $this->assertCount(1, Post::withTerms('foo', 'category')->get());
+        $this->assertCount(2, Post::withTerms('foo', 'product')->get());
+        $this->assertCount(0, Post::withTerms('foo')->get());
+    }
+
+    /** @test */
+    public function it_filters_entities_with_all_given_terms()
+    {
+        Post::factory()->create(['terms' => ['foo', 'bar']]);
+        Post::factory()->create(['terms' => ['foo', 'bar']]);
+        Post::factory()->create(['terms' => ['foo', 'bar', 'baz']]);
+
+        $this->assertCount(3, Post::withAllTerms(['foo', 'bar'])->get());
+        $this->assertCount(1, Post::withAllTerms(['foo', 'bar', 'baz'])->get());
+    }
+
+    /** @test */
+    public function it_filters_entities_with_all_given_terms_and_taxonomy()
+    {
+        Post::factory()->create()
+            ->attachTerms(['foo', 'bar'], 'category');
+        Post::factory()->create()
+            ->attachTerms(['foo', 'bar'], 'category');
+        Post::factory()->create()
+            ->attachTerms(['foo', 'qux']);
+
+        $this->assertCount(2, Post::withAllTerms(['foo', 'bar'], 'category')->get());
+        $this->assertCount(1, Post::withAllTerms(['foo', 'bar'])->get()); // Bar does not exist on 'default' so will be ignored!
+    }
+
+    /** @test */
+    public function it_filters_entities_without_any_term_of_taxonomy()
+    {
+        Post::factory()->create()
+            ->attachTerms(['foo', 'bar'], 'category')
+            ->attachTerms(['baz', 'qux']);
+
+        $this->assertCount(0, Post::withAllTerms([], 'category')->get());
+        $this->assertCount(0, Post::withAllTerms([])->get());
     }
 }

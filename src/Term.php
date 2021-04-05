@@ -17,11 +17,9 @@ class Term extends Model
      * @param Taxonomy|string|null $taxonomy
      * @return Collection|Term
      */
-    public static function store(Collection|array|string $terms, Taxonomy|string $taxonomy = null): Collection|Term
+    public static function store(Collection|array|string $terms, Taxonomy|string $taxonomy = null): Collection|self
     {
-        $taxonomy = app(Taxonomy::class)->store(
-            static::resolveTaxonomyName($taxonomy)
-        );
+        $taxonomy = app(Taxonomy::class)->store($taxonomy);
 
         if (!is_array($terms) && !$terms instanceof \ArrayAccess) {
             return static::findOrCreate($terms, $taxonomy);
@@ -30,18 +28,23 @@ class Term extends Model
         return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy));
     }
 
+    public function resolve(string|array|Collection $terms, string|Taxonomy $taxonomy = null): Collection
+    {
+        return static::getFromString($terms, $taxonomy)->filter();
+    }
+
     /**
      * Get all terms from a string and taxonomy.
      * @param string|array $terms
      * @param string|null $taxonomy
      * @return Collection
      */
-    public static function getFromString(string|array $terms, string $taxonomy = null): Collection
+    public static function getFromString(string|array $terms, string|Taxonomy $taxonomy = null): Collection
     {
-        $taxonomy = static::resolveTaxonomyName($taxonomy);
+        $taxonomy = app(Taxonomy::class)->resolve($taxonomy);
 
         return static::whereIn('name', collect($terms))
-            ->whereHas('taxonomy', fn(Builder $query) => $query->where('name', $taxonomy))
+            ->whereHas('taxonomy', fn(Builder $query) => $query->where('id', $taxonomy->getKey()))
             ->get();
     }
 
@@ -51,7 +54,7 @@ class Term extends Model
      * @param string|null $taxonomy
      * @return Term
      */
-    public static function findFromString(string|array $terms, string $taxonomy = null): Term
+    public static function findFromString(string|array $terms, string $taxonomy = null): self
     {
         return static::getFromString($terms, $taxonomy)->first();
     }
@@ -62,7 +65,7 @@ class Term extends Model
      * @param $taxonomy
      * @return Term
      */
-    protected static function findOrCreate(Term|string $term, Taxonomy $taxonomy): Term
+    protected static function findOrCreate(Term|string $term, Taxonomy $taxonomy): self
     {
         return $term instanceof Term ? $term : static::firstOrCreate([
             'name' => $term,
@@ -76,17 +79,9 @@ class Term extends Model
      */
     public function taxonomy(): BelongsTo
     {
-        return $this->belongsTo(Taxonomy::class);
-    }
-
-    /**
-     * Get the given taxonomy name or default from config.
-     * @param null $taxonomy
-     * @return string
-     */
-    protected static function resolveTaxonomyName(Taxonomy|string $taxonomy = null): string
-    {
-        return $taxonomy instanceof Taxonomy ? $taxonomy->name : $taxonomy ?? config('taxonomy.default_taxonomy_name');
+        return $this->belongsTo(
+            get_class(app(Taxonomy::class))
+        );
     }
 
     /**

@@ -59,7 +59,7 @@ class TermTest extends TestCase
     public function it_creates_a_term_with_taxonomy_id()
     {
         $taxonomy = Taxonomy::store('category');
-        $term = Term::store('foo', $taxonomy->id);
+        $term = Term::store('foo', $taxonomy);
         $this->assertEquals('category', $term->taxonomy->name);
     }
 

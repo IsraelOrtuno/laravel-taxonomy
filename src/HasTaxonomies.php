@@ -68,7 +68,7 @@ trait HasTaxonomies
      */
     public function detachTerms($terms, $taxonomy = null): self
     {
-        $terms = $this->resolveTerms($terms, $taxonomy);
+        $terms = app(Term::class)->resolve($terms, $taxonomy);
 
         $this->terms()->detach($terms->pluckModelKeys());
 
@@ -118,10 +118,34 @@ trait HasTaxonomies
         return $this;
     }
 
-
-    public function hasTerms($terms, $taxonomy = null)
+    public function scopeWithTerms(Builder $query, $terms, $taxonomy = null)
     {
-//        return static::whereHas('terms', fn(Builder $query) => $query->where('name', $terms))
+        // Get existing terms instances
+        $terms = app(Term::class)->resolve($terms, $taxonomy);
+
+        return $query->whereHas('terms', function (Builder $query) use ($terms) {
+            $query->whereIn('terms.id', $terms->pluckModelKeys());
+        });
+    }
+
+    public function scopeWithAllTerms(Builder $query, $terms, $taxonomy = null)
+    {
+        $taxonomyInstance = app(Taxonomy::class)->resolve($taxonomy);
+        $termsCollection = app(Term::class)->resolve($terms, $taxonomyInstance);
+
+        // If no terms given, we will then return those which have no terms attached.
+        // If counts of given and resolved terms do not match, means that some terms
+        // could not be resolved and may belong to other category.
+        if (!count($termsCollection)) {
+            return $query->whereDoesntHave('terms');
+        }
+
+        foreach ($termsCollection as $term) {
+            $query->whereHas('terms', function (Builder $query) use ($term, $taxonomyInstance) {
+                $query->where('terms.id', $term->getKey())
+                        ->where('terms.taxonomy_id', $taxonomyInstance->getKey());
+            });
+        }
     }
 
     /**
@@ -171,10 +195,6 @@ trait HasTaxonomies
      */
     protected function resolveTerms($terms, $taxonomy = null): Collection
     {
-        return collect($terms)->map(function ($term) use ($taxonomy) {
-            if ($term instanceof Term) return $term;
-
-            return $this->getTermsClass()::findFromString($term, $taxonomy);
-        })->filter();
+        return app(Term::class)->getFromString($terms, $taxonomy)->filter();
     }
 }

@@ -6,6 +6,7 @@ use Devio\Taxonomies\TaxonomiesServiceProvider;
 use Devio\Taxonomies\Tests\Support\CreateTestsSchema;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
+use Spatie\LaravelRay\RayServiceProvider;
 
 abstract class TestCase extends OrchestraTestCase
 {
@@ -21,6 +22,7 @@ abstract class TestCase extends OrchestraTestCase
     protected function getPackageProviders($app)
     {
         return [
+            RayServiceProvider::class,
             TaxonomiesServiceProvider::class
         ];
     }

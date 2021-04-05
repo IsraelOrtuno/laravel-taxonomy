@@ -4,7 +4,6 @@ namespace Devio\Taxonomies;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
 
 class Taxonomy extends Model
 {
@@ -17,22 +16,21 @@ class Taxonomy extends Model
      */
     public static function store($name): self
     {
-        if ($name instanceof static) {
-            return $name;
-        } elseif (is_numeric($name)) {
-            return (new static)->findOrFail($name);
-        }
-
-        return static::firstOrCreate(compact('name'));
+        return static::resolve($name) ?? static::firstOrCreate(compact('name'));
     }
 
-    public static function resolve(self|string|array|Collection $taxonomies): Collection
+    /**
+     * Resolve a taxonomy record.
+     * @param Taxonomy|string $taxonomy
+     * @return static
+     */
+    public static function resolve(self|string|null $taxonomy): self|null
     {
-        return collect($taxonomies)->map(function ($taxonomy) {
-            if ($taxonomy instanceof static) return $taxonomy;
+        // If no taxonomy is provided, we will have a resolution fallback to the default taxonomy instance.
+        // If it does not exist yet, we will create now. This will happens only once.
+        if (!$taxonomy) return static::store(config('taxonomy.default_taxonomy_name'));
 
-            return $this->getTermsClass()::getFromString($term, $taxonomy);
-        })->filter();
+        return $taxonomy instanceof Taxonomy ? $taxonomy : static::findFromString($taxonomy);
     }
 
     /**
@@ -40,7 +38,7 @@ class Taxonomy extends Model
      * @param string $name
      * @return self
      */
-    public static function findFromString(string $name): self
+    public static function findFromString(string $name): self|null
     {
         return static::where('name', $name)->first();
     }
@@ -51,6 +49,8 @@ class Taxonomy extends Model
      */
     public function terms(): HasMany
     {
-        return $this->hasMany(Term::class);
+        return $this->hasMany(
+            get_class(app(Term::class))
+        );
     }
 }
