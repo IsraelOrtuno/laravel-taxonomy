@@ -215,9 +215,9 @@ class HasTaxonomiesTest extends TestCase
         Post::factory()->create(['terms' => ['foo', 'bar']]);
         Post::factory()->create(['terms' => ['foo', 'baz']]);
 
-        $this->assertCount(1, Post::withTerms('bar')->get());
-        $this->assertCount(2, Post::withTerms(['bar', 'baz'])->get());
-        $this->assertCount(2, Post::withTerms('foo')->get());
+        $this->assertCount(1, Post::whereTerms('bar')->get());
+        $this->assertCount(2, Post::whereTerms(['bar', 'baz'])->get());
+        $this->assertCount(2, Post::whereTerms('foo')->get());
     }
 
     /** @test */
@@ -229,9 +229,9 @@ class HasTaxonomiesTest extends TestCase
         Post::factory()->create()
             ->attachTerms(['foo', 'baz', 'qux'], 'product');
 
-        $this->assertCount(1, Post::withTerms('foo', 'category')->get());
-        $this->assertCount(2, Post::withTerms('foo', 'product')->get());
-        $this->assertCount(0, Post::withTerms('foo')->get());
+        $this->assertCount(1, Post::whereTerms('foo', 'category')->get());
+        $this->assertCount(2, Post::whereTerms('foo', 'product')->get());
+        $this->assertCount(0, Post::whereTerms('foo')->get());
     }
 
     /** @test */
@@ -241,8 +241,8 @@ class HasTaxonomiesTest extends TestCase
         Post::factory()->create(['terms' => ['foo', 'bar']]);
         Post::factory()->create(['terms' => ['foo', 'bar', 'baz']]);
 
-        $this->assertCount(3, Post::withAllTerms(['foo', 'bar'])->get());
-        $this->assertCount(1, Post::withAllTerms(['foo', 'bar', 'baz'])->get());
+        $this->assertCount(3, Post::whereAllTerms(['foo', 'bar'])->get());
+        $this->assertCount(1, Post::whereAllTerms(['foo', 'bar', 'baz'])->get());
     }
 
     /** @test */
@@ -255,8 +255,8 @@ class HasTaxonomiesTest extends TestCase
         Post::factory()->create()
             ->attachTerms(['foo', 'qux']);
 
-        $this->assertCount(2, Post::withAllTerms(['foo', 'bar'], 'category')->get());
-        $this->assertCount(1, Post::withAllTerms(['foo', 'bar'])->get()); // Bar does not exist on 'default' so will be ignored!
+        $this->assertCount(2, Post::whereAllTerms(['foo', 'bar'], 'category')->get());
+        $this->assertCount(1, Post::whereAllTerms(['foo', 'bar'])->get()); // Bar does not exist on 'default' so will be ignored!
     }
 
     /** @test */
@@ -266,7 +266,7 @@ class HasTaxonomiesTest extends TestCase
             ->attachTerms(['foo', 'bar'], 'category')
             ->attachTerms(['baz', 'qux']);
 
-        $this->assertCount(0, Post::withAllTerms([], 'category')->get());
-        $this->assertCount(0, Post::withAllTerms([])->get());
+        $this->assertCount(0, Post::whereAllTerms([], 'category')->get());
+        $this->assertCount(0, Post::whereAllTerms([])->get());
     }
 }
