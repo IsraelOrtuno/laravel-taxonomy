@@ -14,7 +14,7 @@ class TermTest extends TestCase
     {
         Term::store('foo');
 
-        $this->assertDatabaseHas('terms', ['name' => 'foo']);
+        $this->assertDatabaseHas('terms', ['name->en' => 'foo']);
     }
 
     /** @test */

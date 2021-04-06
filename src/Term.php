@@ -6,44 +6,64 @@ use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 class Term extends Model
 {
+    use HasTranslations;
+
     public $guarded = [];
+
+    public array $translatable = ['name', 'key'];
 
     /**
      * Create a new term bound to a taxonomy.
      * @param Collection|array|string $terms
      * @param Taxonomy|string|null $taxonomy
+     * @param string|null $locale
      * @return Collection|Term
      */
-    public static function store(Collection|array|string $terms, Taxonomy|string $taxonomy = null): Collection|self
+    public static function store(
+        Collection|array|string $terms,
+        Taxonomy|string $taxonomy = null,
+        string $locale = null): Collection|self
     {
         $taxonomy = app(Taxonomy::class)->store($taxonomy);
 
         if (!is_array($terms) && !$terms instanceof \ArrayAccess) {
-            return static::findOrCreate($terms, $taxonomy);
+            return static::findOrCreate($terms, $taxonomy, $locale);
         }
 
-        return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy));
+        return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy, $locale));
     }
 
-    public function resolve(string|array|Collection $terms, string|Taxonomy $taxonomy = null): Collection
+    /**
+     * Resolve a single or a collection of terms that exist in database for a given taxonomy.
+     * @param string|array|Collection $terms
+     * @param string|Taxonomy|null $taxonomy
+     * @param string|null $locale
+     * @return Collection
+     */
+    public function resolve(string|array|Collection $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
     {
-        return static::getFromString($terms, $taxonomy)->filter();
+        return static::getFromString($terms, $taxonomy, $locale)->filter();
     }
 
     /**
      * Get all terms from a string and taxonomy.
      * @param string|array $terms
-     * @param string|null $taxonomy
+     * @param string|Taxonomy|null $taxonomy
+     * @param string|null $locale
      * @return Collection
      */
-    public static function getFromString(string|array $terms, string|Taxonomy $taxonomy = null): Collection
+    public static function getFromString(string|array $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
     {
+        $locale = $locale ?? app()->getLocale();
+
         $taxonomy = app(Taxonomy::class)->resolve($taxonomy);
 
-        return static::whereIn('name', collect($terms))
+        return static::whereIn("name->{$locale}", collect($terms))
+//            ->orWhereIn("key->{$locale}", collect($terms))
             ->whereHas('taxonomy', fn(Builder $query) => $query->where('id', $taxonomy->getKey()))
             ->get();
     }
@@ -51,24 +71,30 @@ class Term extends Model
     /**
      * Get a term from a string and taxonomy.
      * @param string|array $terms
-     * @param string|null $taxonomy
-     * @return Term
+     * @param string|Taxonomy|null $taxonomy
+     * @param string|null $locale
+     * @return Term|null
      */
-    public static function findFromString(string|array $terms, string $taxonomy = null): self
+    public static function findFromString(string|array $terms, string|Taxonomy $taxonomy = null, string $locale = null): self | null
     {
-        return static::getFromString($terms, $taxonomy)->first();
+        return static::getFromString($terms, $taxonomy, $locale)->first();
     }
 
     /**
      * Get the first matching term from database.
-     * @param $term
-     * @param $taxonomy
+     * @param Term|string $term
+     * @param Taxonomy $taxonomy
+     * @param string|null $locale
      * @return Term
      */
-    protected static function findOrCreate(Term|string $term, Taxonomy $taxonomy): self
+    protected static function findOrCreate(Term|string $term, Taxonomy $taxonomy, string $locale = null): self
     {
-        return $term instanceof Term ? $term : static::firstOrCreate([
-            'name' => $term,
+        $locale = $locale ?? app()->getLocale();
+
+        if ($term instanceof Term) return $term;
+
+        return static::findFromString($term, $taxonomy, $locale) ?? static::create([
+            'name' => [$locale => $term],
             'taxonomy_id' => $taxonomy->getKey()
         ]);
     }

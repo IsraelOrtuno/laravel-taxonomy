@@ -148,7 +148,14 @@ trait HasTaxonomies
         return $this;
     }
 
-    public function scopeWithTerms(Builder $query, $terms, $taxonomy = null)
+    /**
+     * Get all items matching at least 1 term.
+     * @param Builder $query
+     * @param $terms
+     * @param null $taxonomy
+     * @return Builder
+     */
+    public function scopeWhereTerms(Builder $query, $terms, $taxonomy = null): Builder
     {
         // Get existing terms instances
         $terms = app(Term::class)->resolve($terms, $taxonomy);
@@ -158,7 +165,14 @@ trait HasTaxonomies
         });
     }
 
-    public function scopeWithAllTerms(Builder $query, $terms, $taxonomy = null)
+    /**
+     * Get all items matching all terms.
+     * @param Builder $query
+     * @param $terms
+     * @param null $taxonomy
+     * @return Builder
+     */
+    public function scopeWhereAllTerms(Builder $query, $terms, $taxonomy = null)
     {
         $taxonomyInstance = app(Taxonomy::class)->resolve($taxonomy);
         $termsCollection = app(Term::class)->resolve($terms, $taxonomyInstance);
