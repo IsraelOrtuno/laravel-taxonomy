@@ -5,7 +5,7 @@ namespace Devio\Taxonomies;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 
-class TaxonomiesServiceProvider extends ServiceProvider
+class TaxonomyServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
