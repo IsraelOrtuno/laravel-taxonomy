@@ -4,9 +4,9 @@ namespace Devio\Taxonomies;
 
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Translatable\HasTranslations;
 
 class Term extends Model
 {
@@ -37,6 +37,11 @@ class Term extends Model
         return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy, $locale));
     }
 
+    public function entity()
+    {
+        return $this->morphedByMany($this->taxable_type, 'taxables');
+    }
+
     /**
      * Resolve a single or a collection of terms that exist in database for a given taxonomy.
      * @param string|array|Collection $terms
@@ -44,8 +49,18 @@ class Term extends Model
      * @param string|null $locale
      * @return Collection
      */
-    public function resolve(string|array|Collection $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
+    public function resolve(array|Collection|string $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
     {
+        if (is_array($terms) || $terms instanceof Collection) {
+            $terms = collect($terms);
+            $instances = $terms->filter(fn ($term) => $term instanceof Collection)->count();
+
+            // All are instances of Term, so we do not need to find anything
+            if ($terms->count() === $instances) {
+                return $terms;
+            }
+        }
+
         return static::getFromString($terms, $taxonomy, $locale)->filter();
     }
 
@@ -56,7 +71,7 @@ class Term extends Model
      * @param string|null $locale
      * @return Collection
      */
-    public static function getFromString(string|array $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
+    public static function getFromString(array|Collection|string $terms, string|Taxonomy $taxonomy = null, string $locale = null): Collection
     {
         $locale = $locale ?? app()->getLocale();
 
@@ -75,7 +90,7 @@ class Term extends Model
      * @param string|null $locale
      * @return Term|null
      */
-    public static function findFromString(string|array $terms, string|Taxonomy $taxonomy = null, string $locale = null): self | null
+    public static function findFromString(string|array $terms, string|Taxonomy $taxonomy = null, string $locale = null): self|null
     {
         return static::getFromString($terms, $taxonomy, $locale)->first();
     }
@@ -94,9 +109,9 @@ class Term extends Model
         if ($term instanceof Term) return $term;
 
         return static::findFromString($term, $taxonomy, $locale) ?? static::create([
-            'name' => [$locale => $term],
-            'taxonomy_id' => $taxonomy->getKey()
-        ]);
+                'name' => [$locale => $term],
+                'taxonomy_id' => $taxonomy->getKey()
+            ]);
     }
 
     /**

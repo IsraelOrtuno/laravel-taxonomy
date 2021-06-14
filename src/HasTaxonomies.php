@@ -30,7 +30,7 @@ trait HasTaxonomies
             $model->flushTermsQueue();
         });
 
-        static::deleted(function(self $model) {
+        static::deleted(function (self $model) {
             $model->detachAllTerms();
         });
     }
@@ -52,9 +52,11 @@ trait HasTaxonomies
      * @param null $taxonomy
      * @return $this
      */
-    public function attachTerms($terms, $taxonomy = null): self
+    public function attachTerms($terms, $taxonomy = null, string $locale = null): self
     {
-        $terms = Term::store(collect($terms), $taxonomy);
+        $locale = $locale ?? app()->getLocale();
+
+        $terms = Term::store(collect($terms), $taxonomy, $locale);
 
         $this->terms()->syncWithoutDetaching(
             $terms->pluckModelKeys()
@@ -64,7 +66,7 @@ trait HasTaxonomies
     }
 
     /**
-     * Dettach the given terms.
+     * Detach the given terms.
      *
      * @param $terms
      * @param null $taxonomy
@@ -81,7 +83,6 @@ trait HasTaxonomies
 
     /**
      * Detach all terms.
-     * @param null $taxonomy
      * @return $this
      */
     public function detachAllTerms()
@@ -96,7 +97,7 @@ trait HasTaxonomies
      * @param null $taxonomy
      * @return $this
      */
-    public function detachAllTermsForTaxonomy($taxonomy = null)
+    public function detachAllTermsForTaxonomy($taxonomy = null): self
     {
         $taxonomy = app(Taxonomy::class)->resolve($taxonomy);
 
@@ -187,7 +188,7 @@ trait HasTaxonomies
         foreach ($termsCollection as $term) {
             $query->whereHas('terms', function (Builder $query) use ($term, $taxonomyInstance) {
                 $query->where('terms.id', $term->getKey())
-                        ->where('terms.taxonomy_id', $taxonomyInstance->getKey());
+                    ->where('terms.taxonomy_id', $taxonomyInstance->getKey());
             });
         }
     }

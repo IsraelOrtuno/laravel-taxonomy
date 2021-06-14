@@ -4,19 +4,27 @@ namespace Devio\Taxonomies;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Translatable\HasTranslations;
 
 class Taxonomy extends Model
 {
+    use HasTranslations;
+
     public $guarded = [];
+
+    public array $translatable = ['label'];
 
     /**
      * Create a new taxonomy record.
      * @param $name
+     * @param string|null $label
      * @return self
      */
-    public static function store($name): self
+    public static function store($name, string $label = null): self
     {
-        return static::resolve($name) ?? static::firstOrCreate(compact('name'));
+        return static::resolve($name)
+            ?? static::where('name', $name)->first()
+            ?? static::create(compact('name', 'label'));
     }
 
     /**

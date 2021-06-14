@@ -17,6 +17,15 @@ class HasTaxonomiesTest extends TestCase
     }
 
     /** @test */
+    public function it_can_attach_a_localized_term()
+    {
+        $post = Post::factory()->create();
+        $post->attachTerms('foo', null, 'es');
+
+        $this->assertEquals('foo', $post->terms[0]->getTranslation('name', 'es'));
+    }
+
+    /** @test */
     public function it_can_attach_a_term_from_specific_taxonomy()
     {
         $post = Post::factory()->create();
