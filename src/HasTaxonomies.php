@@ -193,6 +193,28 @@ trait HasTaxonomies
         }
     }
 
+    public function hasTerm($term, $taxonomy = null, $locale = null): bool
+    {
+        return $this->hasAnyTerm([$term], $taxonomy, $locale);
+    }
+
+    public function hasAnyTerm($terms, $taxonomy = null, $locale = null): bool
+    {
+        $termsCollection = app(Term::class)->resolve($terms, $taxonomy, $locale);
+
+        return (bool)count(array_intersect(
+            $this->terms->pluckModelKeys()->toArray(),
+            $termsCollection->pluckModelKeys()->toArray()
+        ));
+    }
+
+    public function hasAllTerms($terms, $taxonomy = null, $locale = null)
+    {
+        $termsCollection = app(Term::class)->resolve($terms, $taxonomy, $locale);
+
+        return $this->terms->whereIn('id', $termsCollection->pluckModelKeys())->count() === $termsCollection->count();
+    }
+
     /**
      * Add to terms queue any terms added via the ->terms mutator.
      *

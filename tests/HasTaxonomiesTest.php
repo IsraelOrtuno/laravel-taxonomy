@@ -2,6 +2,7 @@
 
 namespace Devio\Taxonomies\Tests;
 
+use Devio\Taxonomies\Taxonomy;
 use Devio\Taxonomies\Term;
 use Devio\Taxonomies\Tests\Support\Post;
 
@@ -277,5 +278,31 @@ class HasTaxonomiesTest extends TestCase
 
         $this->assertCount(0, Post::whereAllTerms([], 'category')->get());
         $this->assertCount(0, Post::whereAllTerms([])->get());
+    }
+    
+    /** @test */
+    public function it_checks_an_entity_has_any_term()
+    {
+        $post = Post::factory()->create()
+            ->attachTerms(['foo', 'bar'], 'category')
+            ->attachTerms(['baz', 'qux']);
+
+        $this->assertTrue($post->hasAnyTerm(['foo'], 'category'));
+        $this->assertTrue($post->hasAnyTerm(['foo', 'bar'], 'category'));
+        $this->assertFalse($post->hasAnyTerm(['foo']));
+    }
+
+    /** @test */
+    public function it_checks_an_entity_has_all_terms()
+    {
+        Term::store('tag0', 'category');
+
+        $post = Post::factory()->create()
+            ->attachTerms(['tag1', 'tag2', 'tag3'], 'category')
+            ->attachTerms(['tag4', 'tag5']);
+
+        $this->assertTrue($post->hasAllTerms(['tag1', 'tag2'], 'category'));
+        $this->assertTrue($post->hasAllTerms(['tag4', 'tag5']));
+        $this->assertFalse($post->hasAllTerms(['tag1', 'tag0'], 'category'));
     }
 }
