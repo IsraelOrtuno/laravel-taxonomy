@@ -23,7 +23,7 @@ class Taxonomy extends Model
     public static function store($name, string $label = null): self
     {
         return static::resolve($name)
-            ?? static::where('name', $name)->first();
+            ?? static::where('name', $name)->first()
             ?? static::create(compact('name'));
     }
 
