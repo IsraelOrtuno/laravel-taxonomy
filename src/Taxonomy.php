@@ -24,7 +24,7 @@ class Taxonomy extends Model
     {
         return static::resolve($name)
             ?? static::where('name', $name)->first();
-//            ?? static::create(compact('name', 'label'));
+            ?? static::create(compact('name'));
     }
 
     /**
