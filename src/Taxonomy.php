@@ -12,7 +12,7 @@ class Taxonomy extends Model
 
     public $guarded = [];
 
-    public array $translatable = ['label'];
+//    public array $translatable = ['label'];
 
     /**
      * Create a new taxonomy record.
@@ -23,8 +23,8 @@ class Taxonomy extends Model
     public static function store($name, string $label = null): self
     {
         return static::resolve($name)
-            ?? static::where('name', $name)->first()
-            ?? static::create(compact('name', 'label'));
+            ?? static::where('name', $name)->first();
+//            ?? static::create(compact('name', 'label'));
     }
 
     /**
