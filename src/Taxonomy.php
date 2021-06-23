@@ -8,7 +8,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Taxonomy extends Model
 {
-    use HasTranslations;
+//    use HasTranslations;
 
     public $guarded = [];
 
