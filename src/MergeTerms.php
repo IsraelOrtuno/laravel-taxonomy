@@ -15,14 +15,18 @@ class MergeTerms
 
     public function __construct(Collection|array $from, Term|int $to)
     {
+        $this->to = $to instanceof Term ? $to->getKey() : $to;
+
         $this->from = collect($from)->map(function ($term) {
             if ($term instanceof Term) return $term->getKey();
             elseif (is_numeric($term)) return $term;
 
             return null;
-        })->filter();
+        })->filter(function ($term) {
+            if ($term == $this->to) return false;
 
-        $this->to = $to instanceof Term ? $to->getKey() : $to;
+            return $term;
+        });
     }
 
     public function merge()
