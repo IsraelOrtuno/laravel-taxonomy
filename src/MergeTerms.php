@@ -34,9 +34,9 @@ class MergeTerms
         DB::beginTransaction();
 
         try {
-            $this->deleteFrom();
             $this->convertFroms();
             $this->deleteDuplicates();
+            $this->deleteFrom();
         } catch (\Exception $e) {
             DB::rollBack();
         }

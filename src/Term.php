@@ -4,6 +4,7 @@ namespace Devio\Taxonomies;
 
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,13 @@ class Term extends Model
     public $guarded = [];
 
     public array $translatable = ['name', 'key'];
+
+    protected static function booted()
+    {
+        static::deleted(function(self $term) {
+            DB::table('taxables')->where('term_id', $term->id)->delete();
+        });
+    }
 
     /**
      * Create a new term bound to a taxonomy.
@@ -35,11 +43,6 @@ class Term extends Model
         }
 
         return collect($terms)->map(fn($term) => static::findOrCreate($term, $taxonomy, $locale));
-    }
-
-    public function entity()
-    {
-        return $this->morphedByMany($this->taxable_type, 'taxables');
     }
 
     /**

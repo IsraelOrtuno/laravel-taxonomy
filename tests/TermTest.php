@@ -117,4 +117,20 @@ class TermTest extends TestCase
 
         $this->assertInstanceOf(CustomTaxonomy::class, $term->taxonomy);
     }
+
+    /** @test */
+    public function it_detaches_entity_from_deleted_term()
+    {
+        $post = Post::factory()->create();
+        $post->attachTerms(['foo', 'bar', 'baz']);
+
+        $term = Term::store('foo');
+
+        $term->delete();
+
+        $post->refresh();
+
+        $this->assertDatabaseMissing('terms', ['name' => 'foo']);
+        $this->assertCount(2, $post->terms);
+    }
 }
