@@ -56,7 +56,7 @@ trait HasTaxonomies
     {
         $locale = $locale ?? app()->getLocale();
 
-        $terms = Term::store(collect($terms), $taxonomy, $locale);
+        $terms = Term::store(Collection::wrap($terms), $taxonomy, $locale);
 
         $this->terms()->syncWithoutDetaching(
             $terms->pluckModelKeys()
@@ -74,7 +74,7 @@ trait HasTaxonomies
      */
     public function detachTerms($terms, $taxonomy = null): self
     {
-        $terms = app(Term::class)->resolve($terms, $taxonomy);
+        $terms = Collection::wrap(app(Term::class)->resolve($terms, $taxonomy));
 
         $this->terms()->detach($terms->pluckModelKeys());
 
@@ -115,7 +115,7 @@ trait HasTaxonomies
      */
     public function syncTerms($terms, $taxonomy = null): self
     {
-        $terms = Term::store(collect($terms), $taxonomy);
+        $terms = Term::store(Collection::wrap($terms), $taxonomy);
 
         $this->terms()->sync($terms->pluckModelKeys());
 
@@ -131,7 +131,9 @@ trait HasTaxonomies
      */
     public function syncTermsOfTaxonomy($terms, $taxonomy = null): self
     {
-        $terms = app(Term::class)->store($terms, $taxonomy = Taxonomy::store($taxonomy));
+        $terms = Collection::wrap(
+            app(Term::class)->store($terms, $taxonomy = Taxonomy::store($taxonomy))
+        );
 
         // taxonomy_id == $taxonomy->id
         $termsToDetach = $this->terms()->where(
