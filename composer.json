@@ -11,12 +11,12 @@
   "require": {
     "php": "^8.0",
     "spatie/eloquent-sortable": "^4.0",
-    "spatie/laravel-translatable": "^5.2.0"
+    "spatie/laravel-translatable": "^6.3.0"
   },
   "require-dev": {
-    "laravel/framework": "~9.0",
-    "orchestra/testbench": "~7.0",
-    "phpunit/phpunit": "^9.3",
+    "laravel/framework": "~10.0",
+    "orchestra/testbench": "^8.0.8",
+    "phpunit/phpunit": "^10.0.16",
     "spatie/laravel-ray": "^1.17"
   },
   "autoload": {
